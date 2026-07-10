@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Prompt / Sarabun ผ่าน next/font (ดูใน layout.tsx) ─────────── */
+
+:root {
+  --navy: #0f172a;
+  --navy-deep: #1e3a8a;
+  --electric: #2563eb;
+  --cyan: #06b6d4;
+  --slate-light: #f8fafc;
+
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --primary: 221 83% 33%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 199 89% 48%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 221 83% 53%;
+  --radius: 1rem;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-feature-settings: "kern";
+  /* ป้องกัน pull-to-refresh รบกวนตอนกรอกหน้างาน */
+  overscroll-behavior-y: none;
+}
+
+/* ── Glassmorphism utility ────────────────────────────────────── */
+@layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-lg shadow-blue-900/5;
+  }
+  /* กระจกเข้มบนพื้น navy (หน้า Login) */
+  .glass-strong {
+    @apply bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl;
+  }
+  .glass-dark {
+    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10;
+  }
+  /* พื้นหลัง gradient สีฟ้า-ขาว ใช้ซ้ำหลายหน้า */
+  .app-gradient {
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(37, 99, 235, 0.18), transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, rgba(6, 182, 212, 0.16), transparent 55%),
+      linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  }
+}
+
+/* ซ่อน spinner ของ number input (เรากรอกด้วยปุ่ม +/- เอง) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Scrollbar เรียบๆ */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(37, 99, 235, 0.25); border-radius: 8px; }
