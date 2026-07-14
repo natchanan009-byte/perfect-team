@@ -52,14 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  // Route protection
+  // Route protection — กันเฉพาะการเข้าหน้าที่ต้อง auth โดยยังไม่ล็อกอิน
+  // ไม่ auto-redirect login → dashboard ตอนโหลด เพื่อให้เปิดแอปมาเจอหน้า login ก่อนเสมอ
+  // (แม้จะมี session เก่าจาก "จำการเข้าระบบ") การ redirect ไป dashboard ทำหลังกดเข้าสู่ระบบสำเร็จเท่านั้น
   useEffect(() => {
     if (loading) return;
     const isLoginPage = pathname === "/login";
     if (!user && !isLoginPage) {
       router.replace("/login");
-    } else if (user && isLoginPage) {
-      router.replace("/dashboard");
     }
   }, [user, loading, pathname, router]);
 
@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(authed);
     const store = remember ? localStorage : sessionStorage;
     store.setItem(STORAGE_KEY, JSON.stringify(authed));
+    router.replace("/dashboard");
     return true;
   };
 
