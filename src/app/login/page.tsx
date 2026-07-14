@@ -70,7 +70,7 @@ export default function LoginPage() {
               ระบบทดสอบสมรรถภาพร่างกาย
             </motion.h1>
             <p className="mt-1 text-sm text-slate-300">
-              Digital Physical Fitness Test — นรต.
+              Digital Physical Fitness Test by -ขันตี1480.
             </p>
           </div>
 
@@ -127,11 +127,6 @@ export default function LoginPage() {
               เข้าสู่ระบบ
             </Button>
           </form>
-
-          <p className="mt-6 text-center text-xs text-slate-400">
-            ทดลองใช้: <span className="text-slate-200">admin / 1234</span> หรือ{" "}
-            <span className="text-slate-200">operator / 1234</span>
-          </p>
         </div>
       </motion.div>
     </main>

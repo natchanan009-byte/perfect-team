@@ -20,6 +20,7 @@ interface AppState {
   // --- ผลทดสอบที่บันทึกแล้ว (key = cadetId) ---
   results: Record<string, TestResult>;
   saveResult: (result: TestResult & { cadetId: string }) => void;
+  deleteResult: (cadetId: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -36,6 +37,11 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           results: { ...state.results, [result.cadetId]: result },
         })),
+      deleteResult: (cadetId) =>
+        set((state) => {
+          const { [cadetId]: _removed, ...rest } = state.results;
+          return { results: rest };
+        }),
     }),
     {
       name: "fitness-test-store",

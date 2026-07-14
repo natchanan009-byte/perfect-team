@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Prompt } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
+import { SplashScreen } from "@/components/SplashScreen";
 
 const prompt = Prompt({
   subsets: ["thai", "latin"],
@@ -31,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="th" className={prompt.variable}>
       <body className="min-h-dvh bg-slate-50 font-sans text-slate-900 antialiased">
+        <SplashScreen />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

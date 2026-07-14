@@ -118,7 +118,7 @@ export default function SettingsPage() {
         backTo="/dashboard"
       />
 
-      <main className="mx-auto max-w-2xl px-4">
+      <main className="relative z-10 mx-auto max-w-2xl px-4">
         {/* คำอธิบาย */}
         <div className="glass -mt-6 flex gap-3 rounded-2xl p-4 text-sm text-slate-600 shadow-lg shadow-slate-900/5">
           <Info className="h-5 w-5 shrink-0 text-brand-accent" />

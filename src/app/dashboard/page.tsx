@@ -19,6 +19,7 @@ import {
   overallSummary,
 } from "@/lib/analytics";
 import { AppHeader } from "@/components/AppHeader";
+import { EmblemWatermark } from "@/components/EmblemWatermark";
 import { StatusPieChart } from "@/components/charts/StatusPieChart";
 import { StationBarChart } from "@/components/charts/StationBarChart";
 
@@ -49,13 +50,16 @@ export default function DashboardPage() {
   }, [stationAvg, summary.tested]);
 
   return (
-    <div className="min-h-dvh bg-slate-50 pb-12">
+    <div className="relative min-h-dvh bg-slate-50 pb-12">
+      {/* ตราตำรวจ (นรต.) เป็นลายน้ำพื้นหลัง */}
+      <EmblemWatermark />
+
       <AppHeader
         title="สรุปผลและแบ่งกลุ่ม"
         subtitle="ภาพรวมผลการทดสอบสมรรถภาพร่างกาย"
       />
 
-      <main className="mx-auto max-w-4xl px-4">
+      <main className="relative z-10 mx-auto max-w-4xl px-4">
         {/* การ์ดสรุป 4 ตัว */}
         <div className="-mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard

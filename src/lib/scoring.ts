@@ -10,6 +10,18 @@ import type {
 const clamp = (n: number, min: number, max: number) =>
   Math.min(max, Math.max(min, n));
 
+// WeakMap cache: ไม่ต้อง sort ตาราง ซ้ำทุก call — invalidate อัตโนมัติเมื่อ criteria เปลี่ยน
+const _sortedTableCache = new WeakMap<object, typeof import("./types").DEFAULT_CRITERIA extends never ? never[] : { value: number; score: number }[]>();
+
+function getSortedTable(station: StationCriteria): StationCriteria["table"] {
+  if (_sortedTableCache.has(station)) {
+    return _sortedTableCache.get(station)!;
+  }
+  const sorted = [...station.table].sort((a, b) => a.value - b.value);
+  _sortedTableCache.set(station, sorted);
+  return sorted;
+}
+
 /**
  * แปลงค่าดิบ (จำนวนครั้ง/ฟุต/วินาที) เป็นคะแนน 0-100
  * โดย interpolate เชิงเส้นจากตารางเกณฑ์ที่กำหนด

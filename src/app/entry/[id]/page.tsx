@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, use } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Save, AlertTriangle } from "lucide-react";
+import { Check, Save, AlertTriangle, X } from "lucide-react";
 import { useAppStore } from "@/store/useAppStore";
 import { computeResult, STATUS_META } from "@/lib/scoring";
 import type { StationId, RawScores } from "@/lib/types";
@@ -16,15 +16,16 @@ import { useCountUp } from "@/hooks/useCountUp";
 export default function CadetEntryPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = use(params);
+  const { id } = params;
   const router = useRouter();
 
   const cadets = useAppStore((s) => s.cadets);
   const criteria = useAppStore((s) => s.criteria);
   const results = useAppStore((s) => s.results);
   const saveResult = useAppStore((s) => s.saveResult);
+  const deleteResult = useAppStore((s) => s.deleteResult);
 
   const cadet = cadets.find((c) => c.id === id);
 
@@ -50,6 +51,11 @@ export default function CadetEntryPage({
 
   const animatedTotal = useCountUp(result.totalScore, 500);
 
+  // กรอกอย่างน้อย 1 สถานีก็บันทึกได้ / มีผลเดิมแล้วก็บันทึกเพื่ออัปเดตได้เสมอ
+  const hasAnyValue = criteria.stations.some((st) => raw[st.id] !== null);
+  const hasExistingResult = !!results[id];
+  const canSave = hasAnyValue || hasExistingResult;
+
   if (!cadet) {
     return (
       <div className="grid min-h-dvh place-items-center bg-slate-50 p-6 text-center">
@@ -72,12 +78,17 @@ export default function CadetEntryPage({
   };
 
   const handleSave = () => {
-    saveResult({
-      ...result,
-      cadetId: cadet.id,
-      evaluatedAt: new Date().toISOString(),
-      criteriaVersion: criteria.version,
-    });
+    if (!hasAnyValue && hasExistingResult) {
+      // ล้างค่าทุกสถานี → ลบผลทดสอบออกจาก store
+      deleteResult(cadet.id);
+    } else {
+      saveResult({
+        ...result,
+        cadetId: cadet.id,
+        evaluatedAt: new Date().toISOString(),
+        criteriaVersion: criteria.version,
+      });
+    }
     setSaved(true);
     setTimeout(() => router.push("/entry"), 900);
   };
@@ -92,7 +103,7 @@ export default function CadetEntryPage({
         backTo="/entry"
       />
 
-      <main className="mx-auto max-w-2xl px-4">
+      <main className="relative z-10 mx-auto max-w-2xl px-4">
         {/* การ์ดสรุป real-time */}
         <motion.div
           layout
@@ -144,11 +155,32 @@ export default function CadetEntryPage({
                       คะแนน
                     </p>
                   </div>
-                  <ScoreBadge
-                    score={sr.score}
-                    passed={sr.passedStation}
-                    hasValue={raw[st.id] !== null}
-                  />
+                  <div className="flex items-center gap-2">
+                    <AnimatePresence>
+                      {raw[st.id] !== null && (
+                        <motion.button
+                          key="clear"
+                          type="button"
+                          initial={{ opacity: 0, scale: 0.6 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.6 }}
+                          transition={{ duration: 0.15 }}
+                          whileTap={{ scale: 0.85 }}
+                          onClick={() => setStation(st.id, null)}
+                          aria-label="ล้างคะแนนสถานีนี้"
+                          className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-400"
+                        >
+                          <X className="h-3 w-3" strokeWidth={2.5} />
+                          <span className="text-[11px] font-medium leading-none">ยกเลิก</span>
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
+                    <ScoreBadge
+                      score={sr.score}
+                      passed={sr.passedStation}
+                      hasValue={raw[st.id] !== null}
+                    />
+                  </div>
                 </div>
 
                 {st.unit === "seconds" ? (
@@ -184,7 +216,7 @@ export default function CadetEntryPage({
           </div>
           <button
             onClick={handleSave}
-            disabled={!result.complete || saved}
+            disabled={!canSave || saved}
             className="flex min-w-[9rem] items-center justify-center gap-2 rounded-2xl bg-brand-accent px-6 py-3.5 font-semibold text-white shadow-lg shadow-brand-accent/30 transition active:scale-95 disabled:opacity-40"
           >
             <AnimatePresence mode="wait" initial={false}>
@@ -209,12 +241,21 @@ export default function CadetEntryPage({
             </AnimatePresence>
           </button>
         </div>
-        {!result.complete && (
+        {!hasAnyValue && !hasExistingResult ? (
           <p className="pb-2 text-center text-xs text-amber-500">
             <AlertTriangle className="mr-1 inline h-3.5 w-3.5" />
-            กรอกให้ครบทั้ง 6 สถานีก่อนบันทึก
+            กรอกอย่างน้อย 1 สถานีเพื่อบันทึก
           </p>
-        )}
+        ) : !hasAnyValue && hasExistingResult ? (
+          <p className="pb-2 text-center text-xs text-red-400">
+            <AlertTriangle className="mr-1 inline h-3.5 w-3.5" />
+            บันทึกจะยกเลิกผลทดสอบทั้งหมดของ นรต. คนนี้
+          </p>
+        ) : !result.complete ? (
+          <p className="pb-2 text-center text-xs text-slate-400">
+            บันทึกได้เลย · ยังกรอกไม่ครบ 6 สถานี (กลับมาแก้ไขภายหลังได้)
+          </p>
+        ) : null}
       </div>
     </div>
   );
