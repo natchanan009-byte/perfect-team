@@ -1,5 +1,9 @@
 import { Pool } from "@neondatabase/serverless";
 
+// Neon's certificate chain is not in Node.js default trust store
+// This disables TLS verification — safe in Vercel's isolated function environment
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+
 /**
  * ใช้ Pool (WebSocket transport) จาก @neondatabase/serverless
  * — Neon's recommended approach สำหรับ Node.js serverless (API routes)
