@@ -21,6 +21,12 @@ interface AppState {
   results: Record<string, TestResult>;
   saveResult: (result: TestResult & { cadetId: string }) => void;
   deleteResult: (cadetId: string) => void;
+
+  // --- sync จาก DB (DbSyncProvider เรียกตอน mount) ---
+  hydrate: (
+    dbResults: Record<string, TestResult>,
+    dbCriteria: CriteriaConfig | null
+  ) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -42,6 +48,14 @@ export const useAppStore = create<AppState>()(
           const { [cadetId]: _removed, ...rest } = state.results;
           return { results: rest };
         }),
+
+      hydrate: (dbResults, dbCriteria) =>
+        set((state) => ({
+          // DB = source of truth; ถ้า DB ว่าง (ครั้งแรก) ใช้ค่า local ต่อ
+          results:
+            Object.keys(dbResults).length > 0 ? dbResults : state.results,
+          criteria: dbCriteria ?? state.criteria,
+        })),
     }),
     {
       name: "fitness-test-store",
