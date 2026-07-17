@@ -1,28 +1,21 @@
-import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
-import { initDb } from "@/lib/db";
+import { initDb, getDb } from "@/lib/db";
 import { computeResult } from "@/lib/scoring";
 import { DEFAULT_CRITERIA } from "@/lib/default-criteria";
 import type { StationId } from "@/lib/types";
 
-/**
- * PUT /api/results/[cadetId]/raw
- * รับ raw scores จาก Python script แล้วคำนวณผลและบันทึกลง DB
- * body: Record<StationId, number | null>
- */
 export async function PUT(
   request: Request,
   { params }: { params: { cadetId: string } }
 ) {
   try {
     await initDb();
+    const sql = getDb();
     const rawScores: Partial<Record<StationId, number | null>> = await request.json();
 
-    // โหลด criteria จาก DB (ถ้ามี) ไม่งั้นใช้ค่า default
-    const { rows } = await sql`SELECT data FROM app_criteria WHERE id = 1`;
+    const rows = await sql`SELECT data FROM app_criteria WHERE id = 1`;
     const criteria = rows.length > 0 ? rows[0].data : DEFAULT_CRITERIA;
 
-    // คำนวณผลด้วย engine เดียวกับ frontend
     const result = computeResult(criteria, rawScores);
     const fullResult = {
       ...result,

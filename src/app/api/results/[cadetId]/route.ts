@@ -1,14 +1,13 @@
-import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
-import { initDb } from "@/lib/db";
+import { initDb, getDb } from "@/lib/db";
 
-// PUT /api/results/[cadetId] — upsert ผลทดสอบของ นรต. คนนั้น
 export async function PUT(
   request: Request,
   { params }: { params: { cadetId: string } }
 ) {
   try {
     await initDb();
+    const sql = getDb();
     const data = await request.json();
     await sql`
       INSERT INTO app_results (cadet_id, data, updated_at)
@@ -23,13 +22,13 @@ export async function PUT(
   }
 }
 
-// DELETE /api/results/[cadetId] — ลบผลทดสอบของ นรต. คนนั้น
 export async function DELETE(
   _request: Request,
   { params }: { params: { cadetId: string } }
 ) {
   try {
     await initDb();
+    const sql = getDb();
     await sql`DELETE FROM app_results WHERE cadet_id = ${params.cadetId}`;
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -1,13 +1,12 @@
-import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
-import { initDb } from "@/lib/db";
+import { initDb, getDb } from "@/lib/db";
 import type { CriteriaConfig } from "@/lib/types";
 
-// GET /api/criteria — คืน CriteriaConfig ปัจจุบัน (null ถ้ายังไม่มีใน DB)
 export async function GET() {
   try {
     await initDb();
-    const { rows } = await sql`SELECT data FROM app_criteria WHERE id = 1`;
+    const sql = getDb();
+    const rows = await sql`SELECT data FROM app_criteria WHERE id = 1`;
     if (rows.length === 0) return NextResponse.json(null);
     return NextResponse.json(rows[0].data as CriteriaConfig);
   } catch (err) {
@@ -16,10 +15,10 @@ export async function GET() {
   }
 }
 
-// PUT /api/criteria — upsert เกณฑ์ใหม่
 export async function PUT(request: Request) {
   try {
     await initDb();
+    const sql = getDb();
     const data: CriteriaConfig = await request.json();
     await sql`
       INSERT INTO app_criteria (id, data, updated_at)

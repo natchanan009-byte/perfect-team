@@ -1,11 +1,20 @@
-import { sql } from "@vercel/postgres";
+import { neon } from "@neondatabase/serverless";
+
+/**
+ * สร้าง SQL client จาก POSTGRES_URL (set อัตโนมัติโดย Vercel เมื่อ connect Neon DB)
+ * ใช้ HTTP transport — ทำงานได้ใน serverless / edge environment
+ */
+function getDb() {
+  const url = process.env.POSTGRES_URL;
+  if (!url) throw new Error("POSTGRES_URL env var is not set");
+  return neon(url);
+}
 
 /**
  * สร้างตารางถ้ายังไม่มี (idempotent — เรียกซ้ำได้ปลอดภัย)
- * app_results  : ผลคะแนนแต่ละ นรต. (1 row / คน)
- * app_criteria : เกณฑ์การให้คะแนน (1 row เสมอ, id = 1)
  */
 export async function initDb() {
+  const sql = getDb();
   await sql`
     CREATE TABLE IF NOT EXISTS app_cadets (
       cadet_id   TEXT        PRIMARY KEY,
@@ -28,3 +37,5 @@ export async function initDb() {
     )
   `;
 }
+
+export { getDb };
