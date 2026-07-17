@@ -8,8 +8,13 @@ let _pool: Pool | null = null;
 
 function getPool(): Pool {
   if (!_pool) {
-    const url = process.env.POSTGRES_URL;
-    if (!url) throw new Error("POSTGRES_URL env var is not set");
+    // POSTGRES_URL_NON_POOLING = direct TCP connection (required for pg)
+    // POSTGRES_URL = pooler/HTTP endpoint (not compatible with pg TCP driver)
+    const url =
+      process.env.POSTGRES_URL_NON_POOLING ||
+      process.env.DATABASE_URL ||
+      process.env.POSTGRES_URL;
+    if (!url) throw new Error("No Postgres connection string found in env vars");
     _pool = new Pool({
       connectionString: url,
       ssl: { rejectUnauthorized: false },
