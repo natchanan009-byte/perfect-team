@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useAppStore } from "@/store/useAppStore";
-import type { CriteriaConfig, TestResult } from "@/lib/types";
+import type { Cadet, CriteriaConfig, TestResult } from "@/lib/types";
 
 /**
  * DbSyncProvider — เชื่อม Zustand store กับ Vercel Postgres
@@ -10,8 +10,8 @@ import type { CriteriaConfig, TestResult } from "@/lib/types";
  * 1. Mount: ดึงข้อมูลจาก DB → hydrate store (DB = source of truth สำหรับ multi-device)
  * 2. Subscribe: เมื่อ results หรือ criteria เปลี่ยน → push ไป API ทันที (optimistic)
  *
- * ถ้า DB ยังไม่ได้ connect (ไม่มี POSTGRES_URL) API จะคืน {} / null
- * และ store จะใช้ค่าจาก localStorage ต่อไปได้ปกติ
+ * ถ้า DB ยังไม่ได้ connect (ไม่มี POSTGRES_URL) API จะคืน [] / {} / null
+ * และ store จะใช้ค่าจาก localStorage / mock-data ต่อไปได้ปกติ
  */
 export function DbSyncProvider({ children }: { children: React.ReactNode }) {
   const hydrate = useAppStore((s) => s.hydrate);
@@ -24,15 +24,17 @@ export function DbSyncProvider({ children }: { children: React.ReactNode }) {
 
     async function loadFromDb() {
       try {
-        const [resultsRes, criteriaRes] = await Promise.all([
+        const [resultsRes, criteriaRes, cadetsRes] = await Promise.all([
           fetch("/api/results"),
           fetch("/api/criteria"),
+          fetch("/api/cadets"),
         ]);
         const dbResults: Record<string, TestResult> = await resultsRes.json();
         const dbCriteria: CriteriaConfig | null = await criteriaRes.json();
-        hydrate(dbResults, dbCriteria);
+        const dbCadets: Cadet[] = await cadetsRes.json();
+        hydrate(dbResults, dbCriteria, dbCadets);
       } catch {
-        // DB ยังไม่พร้อม (dev local / DB ไม่ได้ต่อ) — ใช้ localStorage ต่อ
+        // DB ยังไม่พร้อม (dev local / DB ไม่ได้ต่อ) — ใช้ localStorage + mock-data ต่อ
         console.warn("[DbSync] ไม่สามารถโหลดจาก DB ได้ ใช้ข้อมูล local แทน");
       }
     }

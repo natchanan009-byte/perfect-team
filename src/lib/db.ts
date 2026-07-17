@@ -7,6 +7,13 @@ import { sql } from "@vercel/postgres";
  */
 export async function initDb() {
   await sql`
+    CREATE TABLE IF NOT EXISTS app_cadets (
+      cadet_id   TEXT        PRIMARY KEY,
+      data       JSONB       NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  await sql`
     CREATE TABLE IF NOT EXISTS app_results (
       cadet_id   TEXT        PRIMARY KEY,
       data       JSONB       NOT NULL,

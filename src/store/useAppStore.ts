@@ -16,6 +16,7 @@ interface AppState {
 
   // --- ข้อมูล นรต. ---
   cadets: Cadet[];
+  setCadets: (cadets: Cadet[]) => void;
 
   // --- ผลทดสอบที่บันทึกแล้ว (key = cadetId) ---
   results: Record<string, TestResult>;
@@ -25,7 +26,8 @@ interface AppState {
   // --- sync จาก DB (DbSyncProvider เรียกตอน mount) ---
   hydrate: (
     dbResults: Record<string, TestResult>,
-    dbCriteria: CriteriaConfig | null
+    dbCriteria: CriteriaConfig | null,
+    dbCadets: Cadet[]
   ) => void;
 }
 
@@ -37,6 +39,7 @@ export const useAppStore = create<AppState>()(
       resetCriteria: () => set({ criteria: DEFAULT_CRITERIA }),
 
       cadets: MOCK_CADETS,
+      setCadets: (cadets) => set({ cadets }),
 
       results: {},
       saveResult: (result) =>
@@ -49,12 +52,13 @@ export const useAppStore = create<AppState>()(
           return { results: rest };
         }),
 
-      hydrate: (dbResults, dbCriteria) =>
+      hydrate: (dbResults, dbCriteria, dbCadets) =>
         set((state) => ({
-          // DB = source of truth; ถ้า DB ว่าง (ครั้งแรก) ใช้ค่า local ต่อ
           results:
             Object.keys(dbResults).length > 0 ? dbResults : state.results,
           criteria: dbCriteria ?? state.criteria,
+          // ถ้า DB มีรายชื่อ ใช้ DB; ไม่งั้นใช้ mock-data เดิม
+          cadets: dbCadets.length > 0 ? dbCadets : state.cadets,
         })),
     }),
     {
