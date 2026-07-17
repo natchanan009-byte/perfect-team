@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { initDb, getDb } from "@/lib/db";
+import { initDb, query } from "@/lib/db";
 import { computeResult } from "@/lib/scoring";
 import { DEFAULT_CRITERIA } from "@/lib/default-criteria";
-import type { StationId } from "@/lib/types";
+import type { CriteriaConfig, StationId } from "@/lib/types";
 
 export async function PUT(
   request: Request,
@@ -10,26 +10,26 @@ export async function PUT(
 ) {
   try {
     await initDb();
-    const sql = getDb();
     const rawScores: Partial<Record<StationId, number | null>> = await request.json();
 
-    const rows = await sql`SELECT data FROM app_criteria WHERE id = 1`;
-    const criteria = rows.length > 0 ? rows[0].data : DEFAULT_CRITERIA;
+    const rows = await query("SELECT data FROM app_criteria WHERE id = 1");
+    const criteria = rows.length > 0 ? (rows[0].data as CriteriaConfig) : DEFAULT_CRITERIA;
 
     const result = computeResult(criteria, rawScores);
     const fullResult = {
       ...result,
       cadetId: params.cadetId,
       evaluatedAt: new Date().toISOString(),
-      criteriaVersion: criteria.version ?? 1,
+      criteriaVersion: (criteria as { version?: number }).version ?? 1,
     };
 
-    await sql`
-      INSERT INTO app_results (cadet_id, data, updated_at)
-      VALUES (${params.cadetId}, ${JSON.stringify(fullResult)}, NOW())
-      ON CONFLICT (cadet_id)
-      DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()
-    `;
+    await query(
+      `INSERT INTO app_results (cadet_id, data, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (cadet_id)
+       DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()`,
+      [params.cadetId, JSON.stringify(fullResult)]
+    );
 
     return NextResponse.json({
       ok: true,

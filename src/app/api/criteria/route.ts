@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { initDb, getDb } from "@/lib/db";
+import { initDb, query } from "@/lib/db";
 import type { CriteriaConfig } from "@/lib/types";
 
 export async function GET() {
   try {
     await initDb();
-    const sql = getDb();
-    const rows = await sql`SELECT data FROM app_criteria WHERE id = 1`;
+    const rows = await query("SELECT data FROM app_criteria WHERE id = 1");
     if (rows.length === 0) return NextResponse.json(null);
     return NextResponse.json(rows[0].data as CriteriaConfig);
   } catch (err) {
@@ -18,14 +17,14 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     await initDb();
-    const sql = getDb();
     const data: CriteriaConfig = await request.json();
-    await sql`
-      INSERT INTO app_criteria (id, data, updated_at)
-      VALUES (1, ${JSON.stringify(data)}, NOW())
-      ON CONFLICT (id)
-      DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()
-    `;
+    await query(
+      `INSERT INTO app_criteria (id, data, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (id)
+       DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()`,
+      [1, JSON.stringify(data)]
+    );
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[api/criteria PUT]", err);

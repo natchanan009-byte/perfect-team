@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { initDb, getDb } from "@/lib/db";
+import { initDb, query } from "@/lib/db";
 
 export async function PUT(
   request: Request,
@@ -7,14 +7,14 @@ export async function PUT(
 ) {
   try {
     await initDb();
-    const sql = getDb();
     const data = await request.json();
-    await sql`
-      INSERT INTO app_results (cadet_id, data, updated_at)
-      VALUES (${params.cadetId}, ${JSON.stringify(data)}, NOW())
-      ON CONFLICT (cadet_id)
-      DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()
-    `;
+    await query(
+      `INSERT INTO app_results (cadet_id, data, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (cadet_id)
+       DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()`,
+      [params.cadetId, JSON.stringify(data)]
+    );
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[api/results PUT]", err);
@@ -28,8 +28,7 @@ export async function DELETE(
 ) {
   try {
     await initDb();
-    const sql = getDb();
-    await sql`DELETE FROM app_results WHERE cadet_id = ${params.cadetId}`;
+    await query("DELETE FROM app_results WHERE cadet_id = $1", [params.cadetId]);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[api/results DELETE]", err);
