@@ -1,32 +1,27 @@
-import { Pool } from "pg";
+import { Pool } from "@neondatabase/serverless";
 
 /**
- * สร้าง connection pool จาก POSTGRES_URL
- * ใช้ TCP transport (pg) — เสถียรใน Vercel Node.js runtime
+ * ใช้ Pool (WebSocket transport) จาก @neondatabase/serverless
+ * — Neon's recommended approach สำหรับ Node.js serverless (API routes)
+ * — WebSocket ทำงานได้ใน Vercel Node.js runtime โดยไม่ต้องมี ws package
  */
 let _pool: Pool | null = null;
 
 function getPool(): Pool {
   if (!_pool) {
-    // POSTGRES_URL_NON_POOLING = direct TCP connection (required for pg)
-    // POSTGRES_URL = pooler/HTTP endpoint (not compatible with pg TCP driver)
     const url =
+      process.env.POSTGRES_URL ||
       process.env.POSTGRES_URL_NON_POOLING ||
-      process.env.DATABASE_URL ||
-      process.env.POSTGRES_URL;
+      process.env.DATABASE_URL;
     if (!url) throw new Error("No Postgres connection string found in env vars");
-    _pool = new Pool({
-      connectionString: url,
-      ssl: { rejectUnauthorized: false },
-      max: 5,
-    });
+    _pool = new Pool({ connectionString: url });
   }
   return _pool;
 }
 
-type QueryResult = Record<string, unknown>[];
+type Row = Record<string, unknown>;
 
-export async function query(text: string, values?: unknown[]): Promise<QueryResult> {
+export async function query(text: string, values?: unknown[]): Promise<Row[]> {
   const pool = getPool();
   const res = await pool.query(text, values);
   return res.rows;
